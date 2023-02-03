@@ -1,7 +1,8 @@
 package annotation.interceptor;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -31,10 +32,14 @@ public class AuditavelInterceptor {
 
     Object execute(InvocationContext ctx) throws Exception{
 
+        /*System.out.println(">>> ctx.getContextData().entrySet()");
         for (Entry<String, Object> e : ctx.getContextData().entrySet()){
             System.out.println("KEY: "+e.getKey());
             System.out.println("VALUE: "+e.getValue().getClass());
-        }
+        }*/
+
+        Auditavel auditavel = getAuditavelAnnotation(ctx.getMethod());
+        System.out.println("Tipo de auditoria: "+auditavel.tipoOperacao().name());
 
         //ctx.getContextData().entrySet().iterator().next().getValue();
 
@@ -57,6 +62,28 @@ public class AuditavelInterceptor {
         tm.commit();
 
         return result;
+    }
+
+    Auditavel getAuditavelAnnotation(Method m){
+        System.out.println(">>> Annotations");
+        for(Annotation a : m.getAnnotations()){
+            //System.out.println(a.toString());
+            if(a instanceof Auditavel){
+                System.out.println("RETORNANDO: "+a.toString());
+                return (Auditavel) a;
+            }
+        }
+
+        System.out.println(">>> DeclaringClass Annotations");
+        for(Annotation a : m.getDeclaringClass().getAnnotations() ){
+            if(a instanceof Auditavel){
+                System.out.println("RETORNANDO: "+a.toString());
+                return (Auditavel) a;
+            }
+        }
+
+        throw new RuntimeException("@Auditavel not found on method " + m.getName() +
+                " or its class " + m.getClass().getName());
     }
     
 }
