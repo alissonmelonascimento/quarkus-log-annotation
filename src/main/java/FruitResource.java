@@ -1,3 +1,4 @@
+import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -18,6 +19,7 @@ public class FruitResource {
         return "Hello from RESTEasy Reactive";
     }
 
+    @Transactional
     @Auditavel(tipoOperacao = TipoOperacaoEnum.BUSCAR_FRUTAS)
     @GET
     @Path("{contrato}")

@@ -2,26 +2,26 @@ package annotation.interceptor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.time.LocalDateTime;
 
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
-import javax.transaction.TransactionManager;
 
 import annotation.Auditavel;
 import annotation.Auditavel.ParametroContrato;
 import entity.Logs;
 import repository.LogsRepository;
+import services.AuditoriaService;
 
 
 @Auditavel
 @Interceptor
 public class AuditavelInterceptor {
 
-    @Inject TransactionManager tm;
+    @Inject
+    AuditoriaService auditoriaService;
 
     @Inject
     LogsRepository logsRepository;
@@ -47,20 +47,22 @@ public class AuditavelInterceptor {
         logs.operacao = auditavel.tipoOperacao().getCode();
         logs.contrato = contrato;
 
-        tm.begin();
+        Object result = null;
+        try{
+            //iniciando auditoria
+            logs = auditoriaService.iniciaAuditoria(logs);
 
-        logsRepository.persist(logs);
+            //executando metodo
+            result = ctx.proceed();
 
-        Object result = ctx.proceed();
+            auditoriaService.finalizaAuditoria(logs.id, true);
 
-        logs.fim     = LocalDateTime.now();
-        logs.sucesso = true;
-        
-        logsRepository.persist(logs);
-        
-        tm.commit();
+            return result;
+        }catch(Exception e){
+            auditoriaService.finalizaAuditoria(logs.id, false);
+            throw e;
+        }
 
-        return result;
     }
 
 
