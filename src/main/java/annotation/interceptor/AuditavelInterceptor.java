@@ -2,6 +2,7 @@ package annotation.interceptor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.time.LocalDateTime;
 
 import javax.inject.Inject;
@@ -11,6 +12,7 @@ import javax.interceptor.InvocationContext;
 import javax.transaction.TransactionManager;
 
 import annotation.Auditavel;
+import annotation.Auditavel.ParametroContrato;
 import entity.Logs;
 import repository.LogsRepository;
 
@@ -32,21 +34,18 @@ public class AuditavelInterceptor {
 
     Object execute(InvocationContext ctx) throws Exception{
 
-        /*System.out.println(">>> ctx.getContextData().entrySet()");
-        for (Entry<String, Object> e : ctx.getContextData().entrySet()){
-            System.out.println("KEY: "+e.getKey());
-            System.out.println("VALUE: "+e.getValue().getClass());
-        }*/
+        Auditavel auditavel = getAuditavel(ctx.getMethod());
+        String contrato     = getContrato(ctx.getMethod());
 
-        Auditavel auditavel = getAuditavelAnnotation(ctx.getMethod());
-        System.out.println("Tipo de auditoria: "+auditavel.tipoOperacao().name());
+        System.out.println("Tipo de operacao: "+auditavel.tipoOperacao().name());
+        System.out.println("Contrato: "+contrato);
 
-        //ctx.getContextData().entrySet().iterator().next().getValue();
-
-        Logs logs = new Logs();
-        logs.ini = LocalDateTime.now();
-        logs.nome = "teste";
+        Logs logs    = new Logs();
+        logs.ini     = LocalDateTime.now();
+        logs.nome    = "teste";
         logs.sucesso = false;
+        logs.operacao = auditavel.tipoOperacao().getCode();
+        logs.contrato = contrato;
 
         tm.begin();
 
@@ -54,7 +53,7 @@ public class AuditavelInterceptor {
 
         Object result = ctx.proceed();
 
-        logs.fim = LocalDateTime.now();
+        logs.fim     = LocalDateTime.now();
         logs.sucesso = true;
         
         logsRepository.persist(logs);
@@ -64,26 +63,43 @@ public class AuditavelInterceptor {
         return result;
     }
 
-    Auditavel getAuditavelAnnotation(Method m){
-        System.out.println(">>> Annotations");
-        for(Annotation a : m.getAnnotations()){
-            //System.out.println(a.toString());
-            if(a instanceof Auditavel){
-                System.out.println("RETORNANDO: "+a.toString());
-                return (Auditavel) a;
+
+    Auditavel getAuditavel(Method m){
+        Auditavel[] auditaveis = m.getAnnotationsByType(Auditavel.class);
+
+        if(auditaveis != null){
+            return auditaveis[0];
+        }
+
+        return null;
+    }
+
+    String getContrato(Method m){
+
+        System.out.println("*** Listando parametros do metodo");
+        for(Parameter parameter : m.getParameters()){
+            System.out.println("Param: "+parameter);
+        }
+
+
+        Annotation[][] parameterAnnotations = m.getParameterAnnotations();
+        int size = parameterAnnotations.length;
+
+        System.out.println(">>> buscando valor do contrato");
+        String contrato = null;
+        parametros: for(int i = 0; i < size; i++){
+            Annotation[] annotations = parameterAnnotations[i];
+            for(Annotation annotation : annotations){
+                if(annotation instanceof ParametroContrato){
+                    Parameter[] parameters = m.getParameters();
+                    System.out.println("Valor do ParametroContrato: "+parameters[i]);
+                    contrato = (String) (Object) parameters[i];
+                    break parametros;
+                }
             }
         }
 
-        System.out.println(">>> DeclaringClass Annotations");
-        for(Annotation a : m.getDeclaringClass().getAnnotations() ){
-            if(a instanceof Auditavel){
-                System.out.println("RETORNANDO: "+a.toString());
-                return (Auditavel) a;
-            }
-        }
-
-        throw new RuntimeException("@Auditavel not found on method " + m.getName() +
-                " or its class " + m.getClass().getName());
+        return contrato;
     }
     
 }

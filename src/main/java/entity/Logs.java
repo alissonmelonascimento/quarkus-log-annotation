@@ -8,7 +8,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 
@@ -28,5 +27,7 @@ public class Logs extends PanacheEntityBase{
     public LocalDateTime ini;
     public LocalDateTime fim;
     public boolean sucesso;
+    public Integer operacao;
+    public String contrato;
     
 }

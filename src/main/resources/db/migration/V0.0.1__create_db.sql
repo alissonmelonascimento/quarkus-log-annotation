@@ -6,5 +6,7 @@ CREATE TABLE public.logs (
     ini timestamp NOT NULL,
     fim timestamp,
     sucesso boolean,
+    operacao int NOT NULL,
+    contrato varchar(20)
 	CONSTRAINT logs_pkey PRIMARY KEY (id)
 );
