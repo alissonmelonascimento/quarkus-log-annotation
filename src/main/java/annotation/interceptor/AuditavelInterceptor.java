@@ -35,7 +35,7 @@ public class AuditavelInterceptor {
     Object execute(InvocationContext ctx) throws Exception{
 
         Auditavel auditavel = getAuditavel(ctx.getMethod());
-        String contrato     = getContrato(ctx.getMethod());
+        String contrato     = getContrato(ctx);
 
         System.out.println("Tipo de operacao: "+auditavel.tipoOperacao().name());
         System.out.println("Contrato: "+contrato);
@@ -74,15 +74,9 @@ public class AuditavelInterceptor {
         return null;
     }
 
-    String getContrato(Method m){
+    String getContrato(InvocationContext ctx){
 
-        System.out.println("*** Listando parametros do metodo");
-        for(Parameter parameter : m.getParameters()){
-            System.out.println("Param: "+parameter);
-        }
-
-
-        Annotation[][] parameterAnnotations = m.getParameterAnnotations();
+        Annotation[][] parameterAnnotations = ctx.getMethod().getParameterAnnotations();
         int size = parameterAnnotations.length;
 
         System.out.println(">>> buscando valor do contrato");
@@ -91,9 +85,9 @@ public class AuditavelInterceptor {
             Annotation[] annotations = parameterAnnotations[i];
             for(Annotation annotation : annotations){
                 if(annotation instanceof ParametroContrato){
-                    Parameter[] parameters = m.getParameters();
+                    Object[] parameters = ctx.getParameters();
                     System.out.println("Valor do ParametroContrato: "+parameters[i]);
-                    contrato = (String) (Object) parameters[i];
+                    contrato = (String) parameters[i];
                     break parametros;
                 }
             }
