@@ -1,4 +1,3 @@
-import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -9,23 +8,22 @@ import annotation.Auditavel;
 import annotation.Auditavel.ParametroContrato;
 import enums.TipoOperacaoEnum;
 
-@Path("/fruits")
-public class FruitResource {
+@Path("/contratos")
+public class ContratosResource {
 
-    @Auditavel(tipoOperacao = TipoOperacaoEnum.BUSCAR_FRUTAS)
+    @Auditavel(tipoOperacao = TipoOperacaoEnum.BUSCA_CONTRATOS)
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String buscar() {
-        return "Hello from RESTEasy Reactive";
+        return "Contratos";
     }
 
-    @Transactional
-    @Auditavel(tipoOperacao = TipoOperacaoEnum.BUSCAR_FRUTAS)
+    @Auditavel(tipoOperacao = TipoOperacaoEnum.DETALHA_CONTRATO)
     @GET
     @Path("{contrato}")
     @Produces(MediaType.TEXT_PLAIN)
     public String buscar2(@ParametroContrato @PathParam("contrato") String contrato) {
-        return "Hello from RESTEasy Reactive 2";
+        return "Contrato '"+contrato+"' detalhado";
     }    
     
 }

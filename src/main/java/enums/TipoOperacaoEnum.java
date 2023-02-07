@@ -3,8 +3,8 @@ package enums;
 public enum TipoOperacaoEnum {
 
     NULL(1,"nulo"),
-    BUSCAR_FRUTAS(1,"buscar-frutas-service"),
-    DETALHA_FRUTA(3,"detalha-fruta-service");
+    BUSCA_CONTRATOS(1,"busca-contratos-service"),
+    DETALHA_CONTRATO(3,"detalha-contrato-service");
 
     private Integer code;
     private String value;

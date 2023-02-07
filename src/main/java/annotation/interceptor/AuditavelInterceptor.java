@@ -12,7 +12,6 @@ import javax.interceptor.InvocationContext;
 import annotation.Auditavel;
 import annotation.Auditavel.ParametroContrato;
 import entity.Logs;
-import repository.LogsRepository;
 import services.AuditoriaService;
 
 
@@ -22,10 +21,6 @@ public class AuditavelInterceptor {
 
     @Inject
     AuditoriaService auditoriaService;
-
-    @Inject
-    LogsRepository logsRepository;
-
     
     @AroundInvoke
     public Object myMethod(InvocationContext ctx) throws Exception{
@@ -40,20 +35,19 @@ public class AuditavelInterceptor {
         System.out.println("Tipo de operacao: "+auditavel.tipoOperacao().name());
         System.out.println("Contrato: "+contrato);
 
-        Logs logs    = new Logs();
-        logs.ini     = LocalDateTime.now();
-        logs.nome    = "teste";
-        logs.sucesso = false;
+        Logs logs     = new Logs();
+        logs.ini      = LocalDateTime.now();
         logs.operacao = auditavel.tipoOperacao().getCode();
+        logs.nome     = auditavel.tipoOperacao().getValue();
         logs.contrato = contrato;
+        logs.sucesso  = false;
 
-        Object result = null;
         try{
             //iniciando auditoria
             logs = auditoriaService.iniciaAuditoria(logs);
 
             //executando metodo
-            result = ctx.proceed();
+            Object result = ctx.proceed();
 
             auditoriaService.finalizaAuditoria(logs.id, true);
 
@@ -81,7 +75,7 @@ public class AuditavelInterceptor {
         Annotation[][] parameterAnnotations = ctx.getMethod().getParameterAnnotations();
         int size = parameterAnnotations.length;
 
-        System.out.println(">>> buscando valor do contrato");
+        System.out.println(">>> Buscando valor do contrato");
         String contrato = null;
         parametros: for(int i = 0; i < size; i++){
             Annotation[] annotations = parameterAnnotations[i];
