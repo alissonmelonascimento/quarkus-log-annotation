@@ -15,18 +15,20 @@ Exemplo de projeto feito em Quarkus para demonstrar a implementacao de uma anota
   docker compose up
 ```
 
-> **Passo 2: Habilite o flyway.** 
+> **Passo 2: Crie o schema public no postgres**
+
+> **Passo 3: Habilite o flyway.** 
 Abra o arquivo **application.properties** e altere a seguinte propriedade:
 ```bash
   myapp.flyway.migrate = true
 ```
 
-> **Passo 3: Execute o projeto.** 
+> **Passo 4: Execute o projeto.** 
 ```bash
   mvnw quarkus:dev
 ```
 
-> **Passo 4: Faça uma chamada à API**
+> **Passo 5: Faça uma chamada à API**
 ```bash
   http://localhost:8080/fruits
 ```
