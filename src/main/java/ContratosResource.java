@@ -22,7 +22,7 @@ public class ContratosResource {
     @GET
     @Path("{contrato}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String buscar2(@ParametroContrato @PathParam("contrato") String contrato) {
+    public String detalhar(@ParametroContrato @PathParam("contrato") String contrato) {
         //throw new RuntimeException("Erro");
         return "Contrato '"+contrato+"' detalhado";
     }    

@@ -49,14 +49,14 @@ public class AuditavelInterceptor {
             //executando metodo
             Object result = ctx.proceed();
 
-            //finalizando auditoria com sucesso
+            //finaliza a auditoria indicando sucesso na chamada do servico
             auditoriaService.finalizaAuditoria(logs.id, true);
 
             return result;
         }catch(Exception e){
 
             /**
-             * finaliza a auditoria indicando sucesso na chamada do servico
+             * finaliza a auditoria indicando sucesso na chamada do servico,
              * caso a excecao esteja entre aquelas consideradas para sucesso
              */
             for(Class<? extends Throwable> t : auditavel.consideraSucessoPara()){
@@ -66,6 +66,7 @@ public class AuditavelInterceptor {
                 }
             }
 
+            //finaliza a auditoria indicando erro na chamada do servico
             auditoriaService.finalizaAuditoria(logs.id, false);
             throw e;
         }

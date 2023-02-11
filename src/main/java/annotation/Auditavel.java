@@ -16,10 +16,7 @@ import enums.TipoOperacaoEnum;
 public @interface Auditavel {
     
     @Nonbinding TipoOperacaoEnum tipoOperacao() default TipoOperacaoEnum.NULL;
-    @Nonbinding Class<? extends Throwable>[] consideraSucessoPara() default {};
-
-
-    
+    @Nonbinding Class<? extends Throwable>[] consideraSucessoPara() default {};    
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
