@@ -11,8 +11,8 @@ public class ContratosResource implements IContratosResource{
 
     @Auditavel(tipoOperacao = TipoOperacaoEnum.DETALHA_CONTRATO, consideraSucessoPara = {RuntimeException.class})
     public String detalhar(@ParametroContrato String contrato) {
-        //throw new RuntimeException("Erro");
-        return "Contrato '"+contrato+"' detalhado";
+        throw new RuntimeException("Erro");
+        //return "Contrato '"+contrato+"' detalhado";
     }    
     
 }

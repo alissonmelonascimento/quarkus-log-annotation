@@ -20,7 +20,7 @@ public class AuditoriaServiceImpl implements AuditoriaService{
     @Transactional(value = Transactional.TxType.REQUIRED)
     public Logs iniciaAuditoria(Logs logs) {
         logs.ini = LocalDateTime.now();
-        logsRepository.persist(logs);
+        logsRepository.salvar(logs);
         return logs;
     }
 
@@ -29,10 +29,10 @@ public class AuditoriaServiceImpl implements AuditoriaService{
     public Logs finalizaAuditoria(Long id, boolean sucesso) {
 
         //evita o erro de detached object
-        Logs logs = logsRepository.findById(id);
+        Logs logs = logsRepository.buscaPeloId(id);
         logs.sucesso = sucesso;
         logs.fim = LocalDateTime.now();
-        logsRepository.persist(logs);
+        logsRepository.salvar(logs);
         return logs;
     }
     
