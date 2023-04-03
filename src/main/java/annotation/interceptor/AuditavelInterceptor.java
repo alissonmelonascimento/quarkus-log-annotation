@@ -9,7 +9,10 @@ import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import annotation.Auditavel;
+import annotation.Auditavel.EntradaServico;
 import annotation.Auditavel.ParametroContrato;
 import entity.Logs;
 import services.AuditoriaService;
@@ -18,6 +21,8 @@ import services.AuditoriaService;
 @Auditavel
 @Interceptor
 public class AuditavelInterceptor {
+
+    static final ObjectMapper jsonUtil = new ObjectMapper();
 
     @Inject
     AuditoriaService auditoriaService;
@@ -31,15 +36,22 @@ public class AuditavelInterceptor {
 
         Auditavel auditavel = getAuditavel(ctx.getMethod());
         String contrato     = getContrato(ctx);
+        Object entrada      = getEntradaServico(ctx);
 
         System.out.println("Tipo de operacao: "+auditavel.tipoOperacao().name());
         System.out.println("Contrato: "+contrato);
+
+        if(entrada != null){
+            System.out.println("Entrada: "+jsonUtil.writeValueAsString(entrada));
+        }
 
         Logs logs     = new Logs();
         logs.ini      = LocalDateTime.now();
         logs.operacao = auditavel.tipoOperacao().getCode();
         logs.nome     = auditavel.tipoOperacao().getValue();
+        logs.url      = auditavel.tipoOperacao().getUrl();
         logs.contrato = contrato;
+        logs.conteudo = jsonUtil.writeValueAsString(entrada);
         logs.sucesso  = false;
 
         try{
@@ -105,5 +117,26 @@ public class AuditavelInterceptor {
 
         return contrato;
     }
+
+    Object getEntradaServico(InvocationContext ctx){
+
+        Annotation[][] parameterAnnotations = ctx.getMethod().getParameterAnnotations();
+        int size = parameterAnnotations.length;
+
+        System.out.println(">>> Buscando entrada do servico");
+        Object entradaServico = null;
+        parametros: for(int i = 0; i < size; i++){
+            Annotation[] annotations = parameterAnnotations[i];
+            for(Annotation annotation : annotations){
+                if(annotation instanceof EntradaServico){
+                    Object[] parameters = ctx.getParameters();
+                    entradaServico = parameters[i];
+                    break parametros;
+                }
+            }
+        }
+
+        return entradaServico;
+    }    
     
 }

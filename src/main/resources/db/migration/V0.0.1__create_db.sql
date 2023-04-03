@@ -8,5 +8,7 @@ CREATE TABLE public.logs (
     sucesso boolean,
     operacao int NOT NULL,
     contrato varchar(20),
+    url varchar(500),
+    conteudo varchar(2000),
 	CONSTRAINT logs_pkey PRIMARY KEY (id)
 );

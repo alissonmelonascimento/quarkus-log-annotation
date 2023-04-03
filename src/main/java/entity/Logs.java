@@ -27,5 +27,7 @@ public class Logs{
     public boolean sucesso;
     public Integer operacao;
     public String contrato;
+    public String url;
+    public String conteudo;
     
 }
