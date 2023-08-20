@@ -1,7 +1,9 @@
 package annotation.interceptor;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.time.LocalDateTime;
 
 import javax.inject.Inject;
@@ -10,6 +12,8 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import annotation.Auditavel;
+import annotation.Auditavel.ParamBody;
+import annotation.Auditavel.ParamFieldContrato;
 import annotation.Auditavel.ParametroContrato;
 import entity.Logs;
 import services.AuditoriaService;
@@ -23,11 +27,11 @@ public class AuditavelInterceptor {
     AuditoriaService auditoriaService;
     
     @AroundInvoke
-    public Object myMethod(InvocationContext ctx) throws Exception{
+    public Object myMethod(final InvocationContext ctx) throws Exception{
         return execute(ctx);
     }
 
-    Object execute(InvocationContext ctx) throws Exception{
+    Object execute(final InvocationContext ctx) throws Exception{
 
         Auditavel auditavel = getAuditavel(ctx.getMethod());
         String contrato     = getContrato(ctx);
@@ -73,8 +77,27 @@ public class AuditavelInterceptor {
 
     }
 
+    Object getParamValue(final InvocationContext ctx, Class<? extends Annotation> annotationClass){
 
-    Auditavel getAuditavel(Method m){
+        //busca todos os parametroos do metodo
+        Parameter[] parametros = ctx.getMethod().getParameters();
+        int size = parametros.length;
+
+        //varre todos os parametros em busca daquele com a anotacao annotationClass
+        parametros: for(int i = 0; i < size; i++){
+
+            // se encontrar o parametro anotado, busca seu valor no contexto(ctx) baseado na
+            // posicao de declaracao do parametro
+            if(parametros[i].isAnnotationPresent(annotationClass)){
+                Object[] parameters = ctx.getParameters();//o valor do parametro fica no contexto, nao no field
+                return parameters[i];//retornando o valor do parametro
+            }
+        }
+
+        return null;        
+    }
+
+    Auditavel getAuditavel(final Method m){
         Auditavel[] auditaveis = m.getAnnotationsByType(Auditavel.class);
 
         if(auditaveis != null){
@@ -84,26 +107,102 @@ public class AuditavelInterceptor {
         return null;
     }
 
-    String getContrato(InvocationContext ctx){
+    /**
+     * Retorna o valor do contrato, se tiver
+     * 
+     * @param ctx
+     * @return
+     */
+    String getContrato(final InvocationContext ctx){
 
-        Annotation[][] parameterAnnotations = ctx.getMethod().getParameterAnnotations();
-        int size = parameterAnnotations.length;
+        //buscando valor do contrato se estiver entre os parametros do metodo
+        String valorContrato = (String)this.getParamValue(ctx, ParametroContrato.class);
+        if(valorContrato != null){
+            return valorContrato;
+        }
 
-        System.out.println(">>> Buscando valor do contrato");
-        String contrato = null;
+        //buscando valor do contrato se estiver no body de entrada
+        Object bodyValue = this.getBodyValue(ctx);
+        if(bodyValue != null){
+            return this.getFieldValue(bodyValue, ParamFieldContrato.class);
+        }
+
+        return null;
+    }
+
+    /**
+     * Retornando o objeto que representa o body de entrada
+     * 
+     * @param ctx
+     * @return
+     */
+    Object getBodyValue(final InvocationContext ctx){
+
+        /*if(!ctx.getMethod().isAnnotationPresent(ParamBody.class)){
+            return null;
+        }*/
+
+        //busca todos os parametroos do metodo
+        Parameter[] parametros = ctx.getMethod().getParameters();
+        int size = parametros.length;
+
+        //varre todos os parametros em busca daquele com a anotacao @ParamBody
         parametros: for(int i = 0; i < size; i++){
-            Annotation[] annotations = parameterAnnotations[i];
-            for(Annotation annotation : annotations){
-                if(annotation instanceof ParametroContrato){
-                    Object[] parameters = ctx.getParameters();
-                    System.out.println("Valor do ParametroContrato: "+parameters[i]);
-                    contrato = (String) parameters[i];
-                    break parametros;
+
+            // se encontrar o parametro anotado, busca seu valor no contexto(ctx) baseado na
+            // posicao de declaracao do parametro
+            if(parametros[i].isAnnotationPresent(ParamBody.class)){
+                Object[] parameters = ctx.getParameters();//o valor do parametro fica no contexto, nao no field
+                return parameters[i];//retornando o valor do body
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Retornando o valor do field de um determinado objeto
+     * 
+     * @param body
+     * @param annotationClass
+     * @return
+     */
+    String getFieldValue(final Object body, Class<? extends Annotation> annotationClass){
+
+        // FIXME colocar uma chamada recursiva para navegar na arvore de
+        // objetos/valores, pois a anotacao pode estar em um objeto interno
+        
+        String valor = null;
+        Field[] declaredFields = body.getClass().getDeclaredFields();
+        int size = declaredFields.length;
+        declaredFields: for(int i = 0; i < size; i++){
+            if(declaredFields[i].isAnnotationPresent(annotationClass)){                
+                try {
+                    //body.getClass().getMethods()[i].invoke(null);
+
+                    //tenta pegar o valor do field
+                    valor = (String) declaredFields[i].get(body);
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+
+                    try {
+                        //se o field nao for acessivel (private, protected, default)
+                        //alterar seu acesso para true e pega o valor
+                        declaredFields[i].setAccessible(true);
+                        valor = (String) declaredFields[i].get(body);
+                    } catch (IllegalArgumentException e1) {
+                        e1.printStackTrace();
+                    } catch (IllegalAccessException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    declaredFields[i].setAccessible(false);
                 }
             }
         }
 
-        return contrato;
+        return valor;
     }
     
 }

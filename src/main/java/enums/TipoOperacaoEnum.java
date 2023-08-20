@@ -4,7 +4,8 @@ public enum TipoOperacaoEnum {
 
     NULL(1,"nulo"),
     BUSCA_CONTRATOS(1,"busca-contratos-service"),
-    DETALHA_CONTRATO(3,"detalha-contrato-service");
+    DETALHA_CONTRATO(3,"detalha-contrato-service"),
+    SALVA_CONTRATO(4,"salva-contrato-service");
 
     private Integer code;
     private String value;
