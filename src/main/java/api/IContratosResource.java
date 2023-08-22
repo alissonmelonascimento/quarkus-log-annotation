@@ -7,8 +7,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import annotation.Auditavel.ParamBody;
-import api.request.ContratoRequestBody;
+import api.request.DepositoRequestBody;
 
 @Path("/contratos")
 public interface IContratosResource {
@@ -24,6 +23,6 @@ public interface IContratosResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void salvar(@ParamBody ContratoRequestBody body);
+    public void salvar(DepositoRequestBody body);
     
 }

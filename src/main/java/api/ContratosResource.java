@@ -1,8 +1,8 @@
 package api;
 import annotation.Auditavel;
-import annotation.Auditavel.ParamBody;
 import annotation.Auditavel.ParametroContrato;
-import api.request.ContratoRequestBody;
+import annotation.ParamBody;
+import api.request.DepositoRequestBody;
 import enums.TipoOperacaoEnum;
 
 public class ContratosResource implements IContratosResource{
@@ -19,7 +19,7 @@ public class ContratosResource implements IContratosResource{
     }
 
     @Auditavel(tipoOperacao = TipoOperacaoEnum.SALVA_CONTRATO)
-    public void salvar(@ParamBody ContratoRequestBody body){
+    public void salvar(@ParamBody(pathFieldContrato = "contrato.codigo") DepositoRequestBody body){
         return;
     }
     

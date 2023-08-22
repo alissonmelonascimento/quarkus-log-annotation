@@ -22,12 +22,12 @@ public @interface Auditavel {
     @Target(ElementType.PARAMETER)
     public @interface ParametroContrato{}
 
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.PARAMETER)
-    public @interface ParamBody{}
+    //@Retention(RetentionPolicy.RUNTIME)
+    //@Target(ElementType.PARAMETER)
+    //public @interface ParamBody{}
 
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface ParamFieldContrato{}
+    //@Retention(RetentionPolicy.RUNTIME)
+    //@Target(ElementType.FIELD)
+    //public @interface ParamFieldContrato{}
 
 }
