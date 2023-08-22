@@ -30,5 +30,5 @@ Abra o arquivo **application.properties** e altere a seguinte propriedade:
 
 > **Passo 5: Faça uma chamada à API**
 ```bash
-  http://localhost:8080/fruits
+  http://localhost:8080/contratos
 ```
