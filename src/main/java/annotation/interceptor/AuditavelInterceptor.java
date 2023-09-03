@@ -96,7 +96,7 @@ public class AuditavelInterceptor {
 
 
     /**
-     * Retorna os dados extraidos
+     * Retorna os dados extraidos como o numero do contrato
      * 
      * @param ctx
      * @return
@@ -112,12 +112,15 @@ public class AuditavelInterceptor {
         Parameter[] parametros = ctx.getMethod().getParameters();
         int size = parametros.length;
 
-        //varre todos os parametros em busca daquele com a anotacao @ParamBody
+        //Varre todos os parametros em busca daquele com a anotacao @ParamBody ou @ParametroContrato.
+        //Se encontrar, pega o valor do parametro
         parametros: for(int i = 0; i < size; i++){
             if(parametros[i].isAnnotationPresent(ParametroContrato.class)){
                 contrato = (String) ctx.getParameters()[i];
             }else if(parametros[i].isAnnotationPresent(ParamBody.class)){
                 ParamBody annont = parametros[i].getAnnotation(ParamBody.class);
+
+                //procura dentro do objeto o valor do contrato
                 contrato = (String) this.getFieldValue(ctx.getParameters()[i], annont.pathFieldContrato());
             }
         }
