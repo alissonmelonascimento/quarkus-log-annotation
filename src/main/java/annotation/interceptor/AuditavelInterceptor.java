@@ -1,14 +1,11 @@
 package annotation.interceptor;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -37,7 +34,8 @@ public class AuditavelInterceptor {
     Object execute(final InvocationContext ctx) throws Exception{
 
         Auditavel auditavel = this.getAuditavel(ctx.getMethod());
-        String contrato     = this.getContrato(ctx);
+        DadosExtraidos dadosExtraidos = this.extrairDados(ctx);
+        String contrato     = dadosExtraidos.getContrato();
 
         System.out.println("Tipo de operacao: "+auditavel.tipoOperacao().name());
         System.out.println("Contrato: "+contrato);
@@ -94,42 +92,21 @@ public class AuditavelInterceptor {
         }
 
         return null;
-    }    
-
-    /**
-     * Retorna o valor de um parametro de um metodo
-     * 
-     * @param ctx
-     * @param annotationClass
-     * @return
-     */
-    private Object getParamValue(final InvocationContext ctx, Class<? extends Annotation> annotationClass) {
-
-        //busca todos os parametroos do metodo
-        Parameter[] parametros = ctx.getMethod().getParameters();
-        int size = parametros.length;
-
-        //varre todos os parametros em busca daquele com a anotacao annotationClass
-        parametros: for(int i = 0; i < size; i++){
-
-            // se encontrar o parametro anotado, busca seu valor no contexto(ctx) baseado na
-            // posicao de declaracao do parametro
-            if(parametros[i].isAnnotationPresent(annotationClass)){
-                Object[] parameters = ctx.getParameters();//o valor do parametro fica no contexto, nao no field
-                return parameters[i];//retornando o valor do parametro
-            }
-        }
-
-        return null;
     }
 
+
     /**
-     * Retorna um Map onde o key é o path do field e o value o valor do body
+     * Retorna os dados extraidos
      * 
      * @param ctx
      * @return
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
      */
-    private Map<String, Object> getBodyValue(final InvocationContext ctx){
+    private DadosExtraidos extrairDados(final InvocationContext ctx)
+            throws IllegalArgumentException, IllegalAccessException {
+
+        String contrato = null;
 
         //busca todos os parametroos do metodo
         Parameter[] parametros = ctx.getMethod().getParameters();
@@ -137,21 +114,15 @@ public class AuditavelInterceptor {
 
         //varre todos os parametros em busca daquele com a anotacao @ParamBody
         parametros: for(int i = 0; i < size; i++){
-
-            // se encontrar o parametro anotado, busca seu valor no contexto(ctx) baseado na
-            // posicao de declaracao do parametro
-            if(parametros[i].isAnnotationPresent(ParamBody.class)){
-                Object[] parameters = ctx.getParameters();//o valor do parametro fica no contexto, nao no field
-
-                Map<String, Object> map = new HashMap<>();
+            if(parametros[i].isAnnotationPresent(ParametroContrato.class)){
+                contrato = (String) ctx.getParameters()[i];
+            }else if(parametros[i].isAnnotationPresent(ParamBody.class)){
                 ParamBody annont = parametros[i].getAnnotation(ParamBody.class);
-                map.put(annont.pathFieldContrato(), parameters[i]);
-
-                return map;//retornando o path do codigo do contrato e o valor do body
+                contrato = (String) this.getFieldValue(ctx.getParameters()[i], annont.pathFieldContrato());
             }
         }
 
-        return null;
+        return DadosExtraidos.of(contrato);
     }
 
     /**
@@ -160,61 +131,74 @@ public class AuditavelInterceptor {
      * @param obj objeto a ser avaliado
      * @param pathField caminho do field que se deseja retornar o valor
      * @return
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
      */
-    private Object getFieldValue(final Object obj, String pathField){
+    private Object getFieldValue(final Object obj, String pathField)
+            throws IllegalArgumentException, IllegalAccessException {
 
         if(pathField.trim().isEmpty()){
             return null;
         }
 
-        try{
-            List<String> pathParts = null;
+        List<String> pathParts = null;
 
-            if(pathField.indexOf(".") == -1){
-                pathParts = Arrays.asList(pathField);
-            }else{
-                String[] split = pathField.split("\\.");
-                pathParts = Arrays.asList( split );
-            }            
+        if(pathField.indexOf(".") == -1){
+            pathParts = Arrays.asList(pathField);
+        }else{
+            String[] split = pathField.split("\\.");
+            pathParts = Arrays.asList( split );
+        }            
 
-            Object fieldValue = obj;
-            for(String pathPart : pathParts){
-                Field declaredField = fieldValue.getClass().getDeclaredField(pathPart);
-                declaredField.setAccessible(true);
-                fieldValue = declaredField.get(fieldValue);
+        Object fieldValue = obj;
+        for(String pathPart : pathParts){
+
+            Class<? extends Object> fieldClass = null;
+
+            if(fieldValue.getClass() != null){
+                fieldClass = fieldValue.getClass();
             }
 
-            return fieldValue;
-        }catch(Exception e){
-            e.printStackTrace();
+            Field declaredField = null;
+
+            while(fieldClass != null){
+                try{
+                    declaredField = fieldClass.getDeclaredField(pathPart);
+                    break;
+                }catch(NoSuchFieldException e){
+                    fieldClass = fieldClass.getSuperclass();
+                }
+            }
+
+            if(declaredField != null){
+                declaredField.setAccessible(true);
+                fieldValue = declaredField.get(fieldValue);
+            }else{
+                fieldValue = null;
+            }
         }
 
-        return null;
+        return fieldValue;
+    }
+}
+
+class DadosExtraidos{
+
+    private String contrato;
+
+    private DadosExtraidos(String contrato){
+        this.contrato = contrato;
     }
 
-    /**
-     * Retorna o valor do contrato, se tiver
-     * 
-     * @param ctx
-     * @return
-     */
-    private String getContrato(final InvocationContext ctx){
+    public String getContrato() {
+        return contrato;
+    }
 
-        //buscando valor do contrato se estiver entre os parametros do metodo
-        String valorContrato = (String)this.getParamValue(ctx, ParametroContrato.class);
-        if(valorContrato != null){
-            return valorContrato;
-        }
+    public void setContrato(String contrato) {
+        this.contrato = contrato;
+    }
 
-        //buscando valor do contrato se estiver no body de entrada
-        Map<String, Object> bodyMap = this.getBodyValue(ctx);
-        if(bodyMap != null){
-
-            return (String) this.getFieldValue(bodyMap.entrySet().iterator().next().getValue(),
-                                      bodyMap.entrySet().iterator().next().getKey());
-        }        
-
-        return null;
-    }    
-    
+    public static DadosExtraidos of(String contrato){
+        return new DadosExtraidos(contrato);
+    }
 }
